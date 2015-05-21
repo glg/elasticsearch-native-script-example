@@ -6,6 +6,7 @@ import org.elasticsearch.examples.nativescript.script.LookupScript;
 import org.elasticsearch.examples.nativescript.script.CosineSimilarityScoreScript;
 import org.elasticsearch.examples.nativescript.script.PhraseScoreScript;
 import org.elasticsearch.examples.nativescript.script.TFIDFScoreScript;
+import org.elasticsearch.examples.nativescript.script.TFScoreScript;
 import org.elasticsearch.examples.nativescript.script.PopularityScoreScriptFactory;
 import org.elasticsearch.examples.nativescript.script.RandomSortScriptFactory;
 import org.elasticsearch.plugins.AbstractPlugin;
@@ -47,6 +48,7 @@ public class NativeScriptExamplesPlugin extends AbstractPlugin {
         module.registerScript("random", RandomSortScriptFactory.class);
         module.registerScript("popularity", PopularityScoreScriptFactory.class);
         module.registerScript(TFIDFScoreScript.SCRIPT_NAME, TFIDFScoreScript.Factory.class);
+        module.registerScript(TFScoreScript.SCRIPT_NAME, TFScoreScript.Factory.class);
         module.registerScript(CosineSimilarityScoreScript.SCRIPT_NAME, CosineSimilarityScoreScript.Factory.class);
         module.registerScript(PhraseScoreScript.SCRIPT_NAME, PhraseScoreScript.Factory.class);
         module.registerScript(LanguageModelScoreScript.SCRIPT_NAME, LanguageModelScoreScript.Factory.class);
