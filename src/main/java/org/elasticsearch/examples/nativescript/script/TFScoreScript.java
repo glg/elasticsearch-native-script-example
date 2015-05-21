@@ -27,7 +27,7 @@ public class TFScoreScript extends AbstractSearchScript {
     // terms that are used for scoring
     ArrayList<String> terms = null;
 
-    final static public String SCRIPT_NAME = "tfidf_script_score";
+    final static public String SCRIPT_NAME = "tf_script_score";
 
     @Override
     public void setScorer(Scorer scorer) {
@@ -88,7 +88,7 @@ public class TFScoreScript extends AbstractSearchScript {
             }
             return score/terms.size();
         } catch (IOException ex) {
-            throw new ScriptException("Could not compute tfidf: ", ex);
+            throw new ScriptException("Could not compute tf: ", ex);
         }
     }
 
