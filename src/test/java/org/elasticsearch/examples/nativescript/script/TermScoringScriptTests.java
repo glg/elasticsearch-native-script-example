@@ -31,6 +31,7 @@ import org.junit.Test;
 public class TermScoringScriptTests extends AbstractSearchScriptTests {
 
     final static String[] searchTerms = { "foo", "bar" };
+    final static String queryString = "foo bar";
     final static String field = "field";
     final static String wordCountField = field + ".word_count";
     final static  String placeholder = "placeholder";
@@ -69,6 +70,34 @@ public class TermScoringScriptTests extends AbstractSearchScriptTests {
         }
 
     }
+
+    @Test
+    public void testTF() throws Exception {
+
+        initData();
+
+        // initialize parameters for script
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("field", field);
+        params.put("querystring", queryString);
+
+        // Retrieve records and see if they scored 0.0
+        SearchResponse searchResponse = client()
+                .prepareSearch("test")
+                .setQuery(
+                        QueryBuilders.functionScoreQuery()
+                                .add(ScoreFunctionBuilders.scriptFunction(TFScoreScript.SCRIPT_NAME, "native", params))
+                                .boostMode(CombineFunction.REPLACE.getName())).setSize(numDocs).execute().actionGet();
+        assertNoFailures(searchResponse);
+        assertHitCount(searchResponse, numDocs);
+        SearchHit[] hits = searchResponse.getHits().hits();
+        for (int i = 0; i < numDocs; i++) {
+            //assertThat(hits[i].getId(), equalTo(Integer.toString(numDocs - i - 1)));
+            assertTrue(true);
+        }
+
+    }
+
 
     @Test
     public void testCosineSimilarity() throws Exception {

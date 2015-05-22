@@ -10,7 +10,7 @@ import org.elasticsearch.search.lookup.IndexField;
 import org.elasticsearch.search.lookup.IndexFieldTerm;
 
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Map;
 
 /**
@@ -25,7 +25,9 @@ public class TFScoreScript extends AbstractSearchScript {
     // in constructor from parameters.
     String field = null;
     // terms that are used for scoring
-    ArrayList<String> terms = null;
+    HashSet<String> tokens = null;
+    Integer mingram = null;
+    Integer maxgram = null;
 
     final static public String SCRIPT_NAME = "tf_script_score";
 
@@ -61,14 +63,51 @@ public class TFScoreScript extends AbstractSearchScript {
      */
     private TFScoreScript(Map<String, Object> params) {
         params.entrySet();
-        // get the terms
-        terms = (ArrayList<String>) params.get("terms");
         // get the field
         field = (String) params.get("field");
-        if (field == null || terms == null) {
-            throw new ScriptException("cannot initialize " + SCRIPT_NAME + ": field or terms parameter missing!");
+        // get the terms
+        String querystring = (String) params.get("querystring");
+        if (field == null || querystring == null) {
+            throw new ScriptException("cannot initialize " + SCRIPT_NAME + ": field or querystring parameter missing!");
         }
+        maxgram = params.containsKey("maxgram") ? (Integer) params.get("maxgram") : 3;
+        mingram = params.containsKey("mingram") ? (Integer) params.get("mingram") : 3;
+        tokens = tokenize(querystring);
     }
+
+
+    private HashSet<String> tokenize(String querystring) {
+        // port hummingbirds util.normalizeString()?
+        String normString = normalizeString(querystring);
+        HashSet<String> allTokens = new HashSet<>();
+        int n = mingram;
+        while (n <= maxgram) {
+            if (normString.length() <= n) {
+                allTokens.add(normString);
+            }
+            else {
+                int i = 0;
+                while (i <= normString.length() - n) {
+                    allTokens.add(normString.substring(i, i + n));
+                    i++;
+                }
+            }
+            n++;
+        }
+        return allTokens;
+    }
+
+
+    private String normalizeString(String querystring) {
+        // String normString = querystring.toLowerCase();
+        // TODO: The prefix boosting will only work if we use it for field tokenization as well
+        // TODO: should precompile regex
+        // TODO: diacritics?
+        //normString = normString.replaceFirst("^\u0002","");
+        return querystring.toLowerCase();
+    }
+
+
 
     @Override
     public Object run() {
@@ -76,17 +115,16 @@ public class TFScoreScript extends AbstractSearchScript {
             float score = 0;
             // first, get the IndexField object for the field.
             IndexField indexField = indexLookup().get(field);
-            for (int i = 0; i < terms.size(); i++) {
+            for (String token: tokens) {
                 // Now, get the IndexFieldTerm object that can be used to access all
                 // the term statistics
-                IndexFieldTerm indexFieldTerm = indexField.get(terms.get(i));
+                IndexFieldTerm indexFieldTerm = indexField.get(token);
                 // compute the most naive tf and add to current score
-                int tf = indexFieldTerm.tf();
-                if (tf != 0) {
+                if (indexFieldTerm.tf() != 0) {
                     score += 1.0;
                 }
             }
-            return score/terms.size();
+            return score/tokens.size();
         } catch (IOException ex) {
             throw new ScriptException("Could not compute tf: ", ex);
         }
